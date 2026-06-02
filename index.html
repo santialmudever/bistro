@@ -14,31 +14,27 @@
         body {
             background-color: #0d0d0d;
             font-family: 'Helvetica Neue', Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             min-height: 100vh;
             overflow: hidden;
-            perspective: 1000px;
+            perspective: 1500px;
         }
         .container {
             position: relative;
-            width: 100%;
-            max-width: 400px;
-            height: 500px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 100vw;
+            height: 100vh;
         }
         .envelope {
-            position: relative;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             width: 320px;
             height: 220px;
             background: #1a1a1a;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.7);
             cursor: pointer;
-            transition: transform 0.5s ease;
-            border-radius: 0 0 10px 10px;
+            transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease 0.2s;
+            border-radius: 0 0 12px 12px;
             z-index: 2;
         }
         .envelope::before {
@@ -50,14 +46,15 @@
             height: 0;
             border-left: 160px solid transparent;
             border-right: 160px solid transparent;
-            border-top: 120px solid #2a2a2a;
+            border-top: 125px solid #2a2a2a;
             transform-origin: top;
-            transition: transform 0.5s ease 0.3s, z-index 0.2s ease 0.5s;
+            transition: transform 0.4s ease 0.2s, z-index 0.1s ease 0.4s;
             z-index: 3;
         }
         .instruction {
             position: absolute;
-            top: -60px;
+            top: -65px;
+            left: 0;
             width: 100%;
             text-align: center;
             color: #fff;
@@ -65,41 +62,40 @@
             letter-spacing: 2px;
             animation: bounce 2s infinite;
             font-weight: bold;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
         .container.open .envelope::before {
             transform: rotateX(180deg);
             z-index: 1;
         }
+        .container.open .envelope {
+            transform: translate(-50%, 30%) scale(0.4);
+            opacity: 0;
+            pointer-events: none;
+        }
         .ticket {
             position: absolute;
-            width: 90%;
-            max-width: 350px;
+            top: 50%;
+            left: 50%;
+            width: 92%;
+            max-width: 580px;
+            height: auto;
             opacity: 0;
-            transform: scale(0.3) translateY(100px);
-            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.6s, opacity 0.5s ease 0.6s;
+            transform: translate(-50%, -50%) scale(0.2);
+            transition: transform 0.9s cubic-bezier(0.19, 1, 0.22, 1) 0.5s, opacity 0.6s ease 0.5s;
             z-index: 1;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            border-radius: 8px;
-            border: 1px solid #333;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.9);
+            border-radius: 12px;
         }
         .container.open .ticket {
             opacity: 1;
-            transform: scale(1) translateY(0);
+            transform: translate(-50%, -50%) scale(1);
             z-index: 10;
-            position: relative;
         }
-        
-        .container.open .envelope {
-            transform: translateY(150px) scale(0.8);
-            opacity: 0;
-            pointer-events: none;
-            transition: transform 0.6s ease, opacity 0.4s ease 0.2s;
-        }
-
         @keyframes bounce {
             0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-            60% { transform: translateY(-5px); }
+            40% { transform: translateY(-12px); }
+            60% { transform: translateY(-6px); }
         }
     </style>
 </head>
@@ -109,7 +105,6 @@
         <div class="envelope" onclick="openEnvelope()">
             <div class="instruction">SUEGROS, PULSAD PARA ABRIR VUESTRO REGALO DE BODAS! ✉️</div>
         </div>
-        
         <img src="ticketregalo.png" alt="Bono Regalo Canalla Bistro" class="ticket" id="ticketImg">
     </div>
 
@@ -118,31 +113,38 @@
             const container = document.getElementById('invitationContainer');
             if(container.classList.contains('open')) return;
             container.classList.add('open');
+
             setTimeout(() => {
-                var duration = 3 * 1000;
-                var end = Date.now() + duration;
+                var duration = 5 * 1000;
+                var animationEnd = Date.now() + duration;
+                var defaults = { startVelocity: 28, spread: 360, ticks: 60, zIndex: 100, scalar: 1.2 };
 
-                (function frame() {
-                    confetti({
-                        particleCount: 5,
-                        angle: 60,
-                        spread: 55,
-                        origin: { x: 0 },
-                        colors: ['#ff0000', '#ffffff', '#ffbb00']
-                    });
-                    confetti({
-                        particleCount: 5,
-                        angle: 120,
-                        spread: 55,
-                        origin: { x: 1 },
-                        colors: ['#ff0000', '#ffffff', '#ffbb00']
-                    });
+                function randomInRange(min, max) {
+                    return Math.random() * (max - min) + min;
+                }
 
-                    if (Date.now() < end) {
-                        requestAnimationFrame(frame);
+                var interval = setInterval(function() {
+                    var timeLeft = animationEnd - Date.now();
+
+                    if (timeLeft <= 0) {
+                        return clearInterval(interval);
                     }
-                }());
-            }, 600);
+
+                    var particleCount = 50 * (timeLeft / duration);
+
+                    confetti(Object.assign({}, defaults, { 
+                        particleCount, 
+                        origin: { x: randomInRange(0.15, 0.45), y: randomInRange(0.2, 0.5) },
+                        colors: ['#ff1a1a', '#ffffff', '#ffcc00', '#ff00aa']
+                    }));
+
+                    confetti(Object.assign({}, defaults, { 
+                        particleCount, 
+                        origin: { x: randomInRange(0.55, 0.85), y: randomInRange(0.2, 0.5) },
+                        colors: ['#00ffcc', '#ffffff', '#ff6600', '#33ff33']
+                    }));
+                }, 350);
+            }, 500);
         }
     </script>
 </body>
